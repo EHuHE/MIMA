@@ -16,6 +16,7 @@ from mima_verify.core import (
 from mima_verify.ghdl import _find_simulation_support
 from mima_verify.recipe import replay_candidate
 from mima_verify.release_audit import audit_paths, audit_tracked_tree
+from mima_verify.release_audit import PROBLEM_PDF_PATH
 from mima_verify.search import search_equivalent_net_cse
 from mima_verify.vhdl import render_vhdl
 
@@ -123,6 +124,32 @@ class CandidateTests(unittest.TestCase):
 
 
 class ReleaseAuditTests(unittest.TestCase):
+    def test_approved_problem_pdf_has_expected_hash(self) -> None:
+        report = audit_paths(ROOT, [PROBLEM_PDF_PATH])
+        codes = {item["code"] for item in report["violations"]}
+        self.assertNotIn("forbidden-top-level", codes)
+        self.assertNotIn("forbidden-binary-or-third-party-file", codes)
+        self.assertNotIn("approved-binary-hash-mismatch", codes)
+
+    def test_modified_problem_pdf_is_rejected(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            path = root / PROBLEM_PDF_PATH
+            path.parent.mkdir(parents=True)
+            path.write_bytes(b"modified")
+            report = audit_paths(root, [PROBLEM_PDF_PATH])
+            codes = {item["code"] for item in report["violations"]}
+            self.assertIn("approved-binary-hash-mismatch", codes)
+
+    def test_unapproved_pdf_is_rejected(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            path = root / "other.pdf"
+            path.write_bytes(b"%PDF-1.7\n")
+            report = audit_paths(root, ["other.pdf"])
+            codes = {item["code"] for item in report["violations"]}
+            self.assertIn("forbidden-binary-or-third-party-file", codes)
+
     def test_sensitive_path_is_reported_without_value(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)

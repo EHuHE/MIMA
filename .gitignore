@@ -12,6 +12,10 @@
 !/THIRD_PARTY.md
 !/pyproject.toml
 
+!/problem/
+/problem/*
+!/problem/2026密码数学挑战赛-赛题二.pdf
+
 !/docs/
 !/docs/**
 !/hdl/

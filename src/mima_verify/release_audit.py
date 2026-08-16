@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import hashlib
 import re
 import subprocess
 from pathlib import Path, PurePosixPath
@@ -11,6 +12,10 @@ from .core import VerificationError
 
 
 MAX_FILE_BYTES = 10 * 1024 * 1024
+PROBLEM_PDF_PATH = "problem/2026密码数学挑战赛-赛题二.pdf"
+APPROVED_BINARY_SHA256 = {
+    PROBLEM_PDF_PATH: "6612c1c028a62052336218a74f3ad173807ce4ed300b2e4a65ed06dc75b7c099",
+}
 FORBIDDEN_TOP_LEVEL = {
     ".agents",
     ".aris",
@@ -59,6 +64,7 @@ REQUIRED_PATHS = {
     "SECURITY.md",
     "THIRD_PARTY.md",
     "pyproject.toml",
+    PROBLEM_PDF_PATH,
     "candidates/s100_apl_29fd2ff6b6c1dffd/SB.vhd",
     "candidates/s100_apl_29fd2ff6b6c1dffd/theory.json",
     "candidates/s100_cse27_3f9b3b31517bfce2/SB.vhd",
@@ -117,14 +123,15 @@ def audit_paths(root: Path, paths: Sequence[str]) -> dict[str, object]:
     patterns = _sensitive_patterns()
     for relative_text in normalized_paths:
         relative = PurePosixPath(relative_text)
+        approved_binary_hash = APPROVED_BINARY_SHA256.get(relative_text)
         if relative.is_absolute() or ".." in relative.parts or not relative.parts:
             violations.append({"code": "unsafe-index-path", "path": relative_text})
             continue
-        if relative.parts[0] in FORBIDDEN_TOP_LEVEL:
+        if relative.parts[0] in FORBIDDEN_TOP_LEVEL and approved_binary_hash is None:
             violations.append({"code": "forbidden-top-level", "path": relative_text})
         if any(part in FORBIDDEN_PARTS for part in relative.parts):
             violations.append({"code": "generated-or-vendored-path", "path": relative_text})
-        if relative.suffix.lower() in FORBIDDEN_SUFFIXES:
+        if relative.suffix.lower() in FORBIDDEN_SUFFIXES and approved_binary_hash is None:
             violations.append(
                 {"code": "forbidden-binary-or-third-party-file", "path": relative_text}
             )
@@ -154,6 +161,12 @@ def audit_paths(root: Path, paths: Sequence[str]) -> dict[str, object]:
             violations.append({"code": "file-over-10-mib", "path": relative_text})
             continue
         payload = resolved_path.read_bytes()
+        if approved_binary_hash is not None:
+            if hashlib.sha256(payload).hexdigest() != approved_binary_hash:
+                violations.append(
+                    {"code": "approved-binary-hash-mismatch", "path": relative_text}
+                )
+            continue
         if b"\0" in payload:
             violations.append({"code": "unexpected-binary-content", "path": relative_text})
             continue

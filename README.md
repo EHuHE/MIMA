@@ -3,12 +3,16 @@
 > English summary: this repository contains an independently reproducible,
 > dependency-free verifier, deterministic recipe replay, a small CSE searcher,
 > and four retained structural candidates for one fixed 6-bit APN S-box. It
-> deliberately excludes competition files, proprietary cell libraries, raw
-> experiments, personal data, and bundled EDA binaries.
+> includes the official problem statement for reference, while excluding
+> proprietary cell libraries, raw experiments, personal data, and bundled EDA
+> binaries.
 
 本项目研究一个固定 6 比特 APN 置换 S 盒的纯组合门级实现，同时维护两个互不替代的
 目标：理论门延时模型下的 `D_theory`，以及统一综合、映射和 STA 流程下的 `D_sta`。
 这里的“最好”都限定为当前已验证搜索范围，不声称全局最优。
+
+赛题原文：[第十一届（2026）全国高校密码数学挑战赛赛题二 PDF](problem/2026密码数学挑战赛-赛题二.pdf)。
+该 PDF 的版权归原权利人所有，不受本项目 MIT 许可证覆盖；仓库公开前仍需确认其再分发许可。
 
 ## 当前结果
 
@@ -67,9 +71,9 @@ mima-simulate candidates/s100_apl_29fd2ff6b6c1dffd/SB.vhd
 
 ## 仓库边界
 
-- 跟踪：独立验证/搜索源码、四个候选、精简结果、测试和说明。
-- 不跟踪：赛题 PDF、官方模板、Nangate 门库、EDA 二进制、虚拟环境、原始实验、论文、
-  演示文件和最终提交压缩包。
+- 跟踪：赛题二 PDF、独立验证/搜索源码、四个候选、精简结果、测试和说明。
+- 不跟踪：其他官方附件、官方模板、Nangate 门库、EDA 二进制、虚拟环境、原始实验、
+  论文、演示文件和最终提交压缩包。
 - STA 结果来自固定的 Yosys 0.33、GHDL 4.1.0、OpenSTA 3.1.0 和指定 Liberty 快照；
   缺少这些依赖时状态必须写为 `NOT_RUN`，不能写成候选失败。
 - 仓库在竞赛结束并确认规则允许前保持私有；公开前必须再次执行发布审计。
